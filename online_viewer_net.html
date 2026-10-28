@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#17b9ae" />
+<meta name="description" content="Flexible Recharge for Electricity, Water and Gas Bill — pay utility bills, recharge and manage your wallet in one place." />
+<title>Flexible Recharge for Electricity, Water and Gas Bill</title>
+<style>
+/* ============================================================
+   Design tokens — Base44 / shadcn-style neutral palette with the
+   UtilityPay brand teal (#17b9ae, taken from the app's real logo)
+   ============================================================ */
+:root{
+  --background:#fafafa; --foreground:#09090b;
+  --card:#ffffff; --card-fg:#09090b;
+  --muted:#f4f4f5; --muted-fg:#71717a;
+  --border:#e4e4e7; --input:#e4e4e7; --ring:#17b9ae;
+  --primary:#17b9ae; --primary-fg:#ffffff; --primary-soft:#e6f8f6;
+  --secondary:#f4f4f5; --secondary-fg:#18181b;
+  --destructive:#dc2626; --destructive-soft:#fef2f2;
+  --success:#16a34a; --success-soft:#f0fdf4;
+  --warning:#d97706; --warning-soft:#fffbeb;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0 / .05);
+  --shadow:0 1px 3px 0 rgb(0 0 0 / .1), 0 1px 2px -1px rgb(0 0 0 / .1);
+  --shadow-lg:0 10px 30px -12px rgb(0 0 0 / .25);
+  --radius:12px; --radius-sm:8px; --radius-lg:16px;
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --sidebar:248px; --header:56px; --tabbar:64px;
+}
+[data-theme="dark"]{
+  --background:#09090b; --foreground:#fafafa;
+  --card:#111113; --card-fg:#fafafa;
+  --muted:#1c1c1f; --muted-fg:#a1a1aa;
+  --border:#27272a; --input:#27272a;
+  --primary-soft:#0d2f2c; --secondary:#1c1c1f; --secondary-fg:#fafafa;
+  --destructive-soft:#2a1315; --success-soft:#0f2417; --warning-soft:#2a2109;
+  --shadow-lg:0 10px 30px -12px rgb(0 0 0 / .7);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--background);color:var(--foreground);font-family:var(--font);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font:inherit;color:inherit}
+::selection{background:var(--primary-soft);color:var(--foreground)}
+h1,h2,h3,h4{margin:0;letter-spacing:-.02em}
+a{color:inherit;text-decoration:none}
+
+/* ---------------- shell ---------------- */
+.app{min-height:100dvh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;height:var(--header);display:flex;align-items:center;gap:10px;
+  padding:0 16px;background:color-mix(in srgb, var(--background) 82%, transparent);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.02em}
+.logo .mark{width:30px;height:30px;border-radius:9px;background:var(--primary);display:grid;place-items:center;flex:none}
+.logo .mark svg{width:18px;height:18px}
+.logo>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo small{display:block;font-size:10.5px;font-weight:500;color:var(--muted-fg);letter-spacing:0}
+.grow{flex:1}
+.iconbtn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--muted-fg);border:1px solid transparent}
+.iconbtn:hover{background:var(--muted);color:var(--foreground)}
+.iconbtn.on{background:var(--muted);color:var(--foreground)}
+.wallet-pill{display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;border:1px solid var(--border);
+  background:var(--card);border-radius:999px;font-size:12.5px;font-weight:600;box-shadow:var(--shadow-sm)}
+.wallet-pill svg{width:14px;height:14px;color:var(--primary)}
+.avatar{width:32px;height:32px;border-radius:999px;background:linear-gradient(135deg,#17b9ae,#0e8f87);
+  color:#fff;display:grid;place-items:center;font-size:12.5px;font-weight:700;letter-spacing:.02em}
+
+.body{display:flex;flex:1;min-height:0}
+.sidebar{display:none;width:var(--sidebar);flex:none;border-right:1px solid var(--border);padding:14px 12px;
+  position:sticky;top:var(--header);height:calc(100dvh - var(--header));overflow:auto;background:var(--background)}
+.sidenav{display:flex;flex-direction:column;gap:2px}
+.sidenav .label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-fg);padding:12px 10px 6px}
+.navitem{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;font-size:13.5px;font-weight:550;color:var(--muted-fg)}
+.navitem svg{width:17px;height:17px;flex:none}
+.navitem:hover{background:var(--muted);color:var(--foreground)}
+.navitem[aria-current="page"]{background:var(--primary-soft);color:var(--primary);font-weight:650}
+[data-theme="dark"] .navitem[aria-current="page"]{color:#4fd8cd}
+.navitem .count{margin-left:auto;font-size:11px;font-weight:700;background:var(--muted);color:var(--muted-fg);
+  border-radius:999px;padding:1px 7px}
+.navitem[aria-current="page"] .count{background:var(--primary);color:#fff}
+
+.main{flex:1;min-width:0;padding:18px 16px calc(var(--tabbar) + 28px);max-width:1080px;margin:0 auto;width:100%}
+
+/* ---------------- tab bar (mobile) ---------------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;height:calc(var(--tabbar) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);display:grid;grid-template-columns:repeat(5,1fr);
+  background:color-mix(in srgb, var(--card) 92%, transparent);backdrop-filter:blur(14px);border-top:1px solid var(--border)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--muted-fg)}
+.tab svg{width:20px;height:20px}
+.tab[aria-current="page"]{color:var(--primary)}
+
+/* ---------------- primitives ---------------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+.section{display:flex;align-items:baseline;gap:10px;margin:22px 0 10px}
+.section h2{font-size:15px;font-weight:700}
+.section .link{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 16px;border-radius:10px;
+  font-size:13.5px;font-weight:650;background:var(--foreground);color:var(--background);transition:.15s}
+.btn:hover{opacity:.9}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--primary);color:var(--primary-fg)}
+.btn.outline{background:var(--card);color:var(--foreground);border:1px solid var(--border)}
+.btn.outline:hover{background:var(--muted)}
+.btn.ghost{background:transparent;color:var(--muted-fg)}
+.btn.ghost:hover{background:var(--muted);color:var(--foreground)}
+.btn.sm{height:32px;padding:0 12px;font-size:12.5px;border-radius:9px}
+.btn.block{width:100%}
+.btn svg{width:15px;height:15px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.chip.overdue{background:var(--destructive-soft);color:var(--destructive)}
+.chip.soon{background:var(--warning-soft);color:var(--warning)}
+.chip.ok{background:var(--success-soft);color:var(--success)}
+.chip.neutral{background:var(--muted);color:var(--muted-fg)}
+.chip.brand{background:var(--primary-soft);color:var(--primary)}
+.muted{color:var(--muted-fg)}
+.tiny{font-size:12px}
+.mono{font-variant-numeric:tabular-nums}
+.divide>*+*{border-top:1px solid var(--border)}
+
+/* ---------------- home hero ---------------- */
+.hero{position:relative;overflow:hidden;border-radius:var(--radius-lg);padding:20px;color:#fff;
+  background:radial-gradient(120% 140% at 100% 0%, #2fd3c6 0%, #17b9ae 42%, #0b7c75 100%);
+  box-shadow:0 14px 34px -18px rgba(11,124,117,.8)}
+.hero::after{content:"";position:absolute;right:-40px;top:-60px;width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,.12)}
+.hero .row{display:flex;align-items:flex-start;gap:14px;position:relative;z-index:1}
+.hero .k{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:rgba(255,255,255,.8)}
+.hero .v{font-size:32px;font-weight:750;letter-spacing:-.03em;margin-top:4px;line-height:1.1}
+.hero .sub{font-size:12.5px;color:rgba(255,255,255,.86);margin-top:6px}
+.hero .acts{display:flex;gap:8px;margin-top:16px;position:relative;z-index:1}
+.hero .btn{height:36px;background:#fff;color:#0b7c75;font-weight:700}
+.hero .btn.ghosty{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.28)}
+.hello h1{font-size:21px;font-weight:750}
+.hello p{margin:2px 0 0;font-size:12.5px;color:var(--muted-fg)}
+
+/* ---------------- stat grid ---------------- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.stat{padding:12px 14px;border-radius:var(--radius);background:var(--card);border:1px solid var(--border)}
+.stat .k{font-size:11px;font-weight:650;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-fg)}
+.stat .v{font-size:18px;font-weight:750;margin-top:3px;letter-spacing:-.02em}
+
+/* ---------------- quick actions ---------------- */
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.quick button{display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 6px;border-radius:12px;
+  border:1px solid var(--border);background:var(--card);font-size:11.5px;font-weight:600;color:var(--muted-fg)}
+.quick button:hover{border-color:var(--primary);color:var(--foreground)}
+.quick .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
+.quick .ico svg{width:17px;height:17px}
+
+/* ---------------- bill rows ---------------- */
+.bills{overflow:hidden;border-radius:var(--radius)}
+.bill{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--card)}
+.bill:hover{background:color-mix(in srgb, var(--muted) 55%, var(--card))}
+.bill .ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none}
+.bill .ico svg{width:18px;height:18px}
+.bill .txt{min-width:0;flex:1}
+.bill .txt b{display:block;font-size:13.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bill .txt span{font-size:11.5px;color:var(--muted-fg)}
+.bill .amt{text-align:right;flex:none}
+.bill .amt b{display:block;font-size:14px;font-weight:750;font-variant-numeric:tabular-nums}
+
+/* ---------------- forms ---------------- */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-fg);margin-bottom:6px}
+.input,select.input{width:100%;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--input);
+  background:var(--card);outline:none;font-size:14px;transition:.15s}
+.input:focus{border-color:var(--ring);box-shadow:0 0 0 3px var(--primary-soft)}
+.segmented{display:flex;gap:4px;background:var(--muted);padding:3px;border-radius:10px}
+.segmented button{flex:1;height:32px;border-radius:8px;font-size:12.5px;font-weight:650;color:var(--muted-fg)}
+.segmented button[aria-pressed="true"]{background:var(--card);color:var(--foreground);box-shadow:var(--shadow-sm)}
+.methods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.method{display:flex;align-items:center;gap:9px;padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--card);text-align:left}
+.method b{font-size:12.5px;font-weight:650;display:block}
+.method span{font-size:10.5px;color:var(--muted-fg)}
+.method[aria-pressed="true"]{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 2px var(--primary-soft)}
+.method svg{width:17px;height:17px;color:var(--muted-fg);flex:none}
+.method[aria-pressed="true"] svg{color:var(--primary)}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plan{padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);text-align:left}
+.plan b{display:block;font-size:15px;font-weight:750;letter-spacing:-.01em}
+.plan span{font-size:11px;color:var(--muted-fg)}
+.plan[aria-pressed="true"]{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 2px var(--primary-soft)}
+
+/* ---------------- settings rows ---------------- */
+.srow{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--card)}
+.srow .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--muted);color:var(--muted-fg);flex:none}
+.srow .ico svg{width:16px;height:16px}
+.srow .txt{flex:1;min-width:0}
+.srow .txt b{display:block;font-size:13.5px;font-weight:600}
+.srow .txt span{font-size:11.5px;color:var(--muted-fg)}
+.switch{width:38px;height:22px;border-radius:999px;background:var(--input);position:relative;flex:none;transition:background .16s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;
+  box-shadow:var(--shadow-sm);transition:transform .16s}
+.switch[aria-checked="true"]{background:var(--primary)}
+.switch[aria-checked="true"]::after{transform:translateX(16px)}
+
+/* ---------------- sheet / modal ---------------- */
+.scrim{position:fixed;inset:0;background:rgba(9,9,11,.5);backdrop-filter:blur(2px);z-index:60;display:none;
+  align-items:flex-end;justify-content:center;padding:0}
+.scrim[data-open="true"]{display:flex}
+.sheet{width:100%;max-width:460px;background:var(--card);border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+  border:1px solid var(--border);border-bottom:none;box-shadow:var(--shadow-lg);max-height:92dvh;overflow:auto;
+  animation:slideup .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideup{from{transform:translateY(18px);opacity:.6}to{transform:none;opacity:1}}
+.sheet-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.sheet-head h3{font-size:17px;font-weight:750}
+.sheet-head p{margin:2px 0 0;font-size:12.5px;color:var(--muted-fg)}
+.sheet-head .x{margin-left:auto}
+.lines{font-size:13px}
+.lines div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;color:var(--muted-fg)}
+.lines div b{color:var(--foreground);font-variant-numeric:tabular-nums}
+.lines div.total{border-top:1px dashed var(--border);margin-top:6px;padding-top:10px;color:var(--foreground);font-weight:750;font-size:14.5px}
+.err{background:var(--destructive-soft);color:var(--destructive);border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-bottom:12px}
+.done{text-align:center;padding:6px 0 2px}
+.done .tick{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;margin:0 auto 12px;
+  background:var(--success-soft);color:var(--success)}
+.done .tick.bad{background:var(--destructive-soft);color:var(--destructive)}
+.done .tick svg{width:26px;height:26px}
+.done h3{font-size:17px;font-weight:750}
+.done p{margin:4px 0 14px;font-size:12.5px;color:var(--muted-fg)}
+.spinner{width:15px;height:15px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;
+  display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------------- toast ---------------- */
+.toast{position:fixed;left:50%;bottom:calc(var(--tabbar) + 18px);transform:translate(-50%,16px);z-index:80;
+  background:var(--foreground);color:var(--background);border-radius:11px;padding:10px 15px;font-size:13px;font-weight:600;
+  opacity:0;pointer-events:none;transition:.2s;box-shadow:var(--shadow-lg);max-width:92vw;text-align:center}
+.toast[data-show="true"]{opacity:1;transform:translate(-50%,0)}
+
+/* ---------------- empty ---------------- */
+.empty{text-align:center;padding:44px 18px;color:var(--muted-fg)}
+.empty .ico{width:44px;height:44px;border-radius:12px;background:var(--muted);display:grid;place-items:center;margin:0 auto 10px}
+.empty b{display:block;color:var(--foreground);font-size:14px;margin-bottom:3px}
+
+/* ---------------- desktop ---------------- */
+@media (min-width:900px){
+  .sidebar{display:block}
+  .tabbar{display:none}
+  .main{padding:24px 28px 56px}
+  .sheet{border-radius:18px;border-bottom:1px solid var(--border);margin:auto}
+  .scrim{align-items:center}
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .toast{bottom:26px}
+  .hero .v{font-size:36px}
+}
+@media (max-width:520px){
+  .logo small{display:none}
+}
+@media (max-width:420px){
+  .quick{grid-template-columns:repeat(3,1fr)}
+  .methods{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ top bar ============ -->
+  <header class="topbar">
+    <div class="logo">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M13.2 2 6.6 13.1h4.3L9.9 22l6.9-11.4h-4.6L13.2 2Z" fill="#fff"/>
+        </svg>
+      </span>
+      <span>Flexible Recharge<small>Electricity · Water · Gas</small></span>
+    </div>
+    <div class="grow"></div>
+    <div class="wallet-pill" title="Wallet balance">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1H5a2 2 0 0 0-2 2V7Z"/><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="16.5" cy="13" r="1.2" fill="currentColor" stroke="none"/></svg>
+      <span id="walletChip" class="mono">—</span>
+    </div>
+    <button class="iconbtn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"></button>
+    <button class="iconbtn" id="bellBtn" title="Notifications" aria-label="Notifications"></button>
+    <div class="avatar" title="Ananya R.">AR</div>
+  </header>
+
+  <div class="body">
+    <!-- ============ sidebar ============ -->
+    <aside class="sidebar">
+      <nav class="sidenav" id="sidenav"></nav>
+      <div class="label" style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-fg);padding:16px 10px 6px">Wallet</div>
+      <div class="card" style="padding:12px;margin-top:4px">
+        <div class="tiny muted">Balance</div>
+        <div style="font-size:20px;font-weight:750;letter-spacing:-.02em" id="walletSide" class="mono">—</div>
+        <button class="btn primary sm block" style="margin-top:10px" data-action="topup">Add money</button>
+      </div>
+    </aside>
+
+    <!-- ============ routed view ============ -->
+    <main class="main" id="view"></main>
+  </div>
+
+  <!-- ============ tab bar ============ -->
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
+
+<div class="scrim" id="scrim" data-open="false">
+  <div class="sheet" role="dialog" aria-modal="true" id="sheet"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/**
+ * UtilityPay — core domain engine (vanilla JavaScript, zero dependencies)
+ * ---------------------------------------------------------------------
+ * Framework-agnostic: the same module powers the demo UI in index.html and can
+ * be imported from Node (see the `export`-safe guards at the bottom).
+ *
+ * Design rules that matter in a money app:
+ *  1. All amounts are stored as integer PAISE (1 INR = 100 paise). Never float.
+ *  2. Payments are idempotent (client-generated key) so a double-click or a
+ *     flaky network retry can never charge a user twice.
+ *  3. Every state change goes through a single reducer-ish method + a commit
+ *     that notifies subscribers, so the UI is a pure function of state.
+ */
+
+/* ================= UtilityPay engine (source: js/utilitypay.js) ================= */
+/* ------------------------------------------------------------------ */
+/* 1. Constants                                                        */
+/* ------------------------------------------------------------------ */
+
+const Currency = Object.freeze({ INR: 'INR' });
+
+const Category = Object.freeze({
+  ELECTRICITY: 'electricity',
+  WATER: 'water',
+  GAS: 'gas',
+  INTERNET: 'internet',
+  MOBILE: 'mobile',
+  DTH: 'dth',
+});
+
+const PaymentMethod = Object.freeze({
+  WALLET: 'wallet',
+  UPI: 'upi',
+  CARD: 'card',
+  NETBANKING: 'netbanking',
+});
+
+const PaymentStatus = Object.freeze({
+  PENDING: 'pending',
+  SUCCESS: 'success',
+  FAILED: 'failed',
+  REFUNDED: 'refunded',
+});
+
+const CATEGORY_META = Object.freeze({
+  electricity: { label: 'Electricity', icon: '⚡', color: '#f59e0b' },
+  water:       { label: 'Water',       icon: '💧', color: '#0ea5e9' },
+  gas:         { label: 'Gas',         icon: '🔥', color: '#ef4444' },
+  internet:    { label: 'Internet',    icon: '📶', color: '#8b5cf6' },
+  mobile:      { label: 'Mobile',      icon: '📱', color: '#10b981' },
+  dth:         { label: 'DTH',         icon: '📺', color: '#ec4899' },
+});
+
+/** Platform convenience fee, in paise, per payment method. */
+const FEES_PAISE = Object.freeze({
+  wallet: 0,
+  upi: 0,
+  card: 990,        // ₹9.90 platform fee on cards
+  netbanking: 490,  // ₹4.90
+});
+
+/* ------------------------------------------------------------------ */
+/* 2. Money helpers (integer paise)                                    */
+/* ------------------------------------------------------------------ */
+
+const Money = {
+  /** 1299.5 (rupees) -> 129950 (paise). Rounds to the nearest paise. */
+  toPaise(rupees) {
+    const n = typeof rupees === 'string' ? Number(rupees.replace(/[^\d.-]/g, '')) : Number(rupees);
+    if (!Number.isFinite(n)) throw new TypeError(`Invalid amount: ${rupees}`);
+    return Math.round(n * 100);
+  },
+
+  /** 129950 (paise) -> 1299.5 (rupees). Use for display only. */
+  toRupees(paise) {
+    return Math.round(paise) / 100;
+  },
+
+  /** Indian digit grouping: ₹1,23,456.78 */
+  format(paise, { currency = Currency.INR, withSymbol = true } = {}) {
+    const sign = paise < 0 ? '-' : '';
+    const abs = Math.abs(Math.round(paise));
+    const rupees = Math.floor(abs / 100);
+    const fraction = String(abs % 100).padStart(2, '0');
+    const grouped = String(rupees).replace(/(\d)(?=(\d\d)+\d$)/g, '$1,');
+    const symbol = withSymbol ? (currency === Currency.INR ? '₹' : currency + ' ') : '';
+    return `${sign}${symbol}${grouped}.${fraction}`;
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/* 3. Validation                                                       */
+/* ------------------------------------------------------------------ */
+
+const Validation = {
+  /** Consumer / account numbers on utility portals: 6–20 alphanumerics. */
+  isAccountNumber(value) {
+    return typeof value === 'string' && /^[A-Z0-9]{6,20}$/i.test(value.trim());
+  },
+
+  /** Amount must be a positive integer paise count within sane bounds. */
+  isPayableAmount(paise, { min = 100, max = 10_000_000 } = {}) {
+    return Number.isInteger(paise) && paise >= min && paise <= max;
+  },
+
+  isMethod(value) {
+    return Object.values(PaymentMethod).includes(value);
+  },
+
+  /** Optional: Luhn check for card numbers before hitting the PSP. */
+  luhn(number) {
+    const digits = String(number).replace(/\D/g, '');
+    if (digits.length < 12) return false;
+    let sum = 0;
+    let double = false;
+    for (let i = digits.length - 1; i >= 0; i--) {
+      let d = Number(digits[i]);
+      if (double) {
+        d *= 2;
+        if (d > 9) d -= 9;
+      }
+      sum += d;
+      double = !double;
+    }
+    return sum % 10 === 0;
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/* 4. Tiny event emitter                                               */
+/* ------------------------------------------------------------------ */
+
+class Emitter {
+  constructor() {
+    this._listeners = new Map();
+  }
+  on(event, fn) {
+    if (!this._listeners.has(event)) this._listeners.set(event, new Set());
+    this._listeners.get(event).add(fn);
+    return () => this.off(event, fn);
+  }
+  off(event, fn) {
+    this._listeners.get(event)?.delete(fn);
+  }
+  emit(event, payload) {
+    for (const fn of this._listeners.get(event) ?? []) {
+      try { fn(payload); } catch (err) { console.error(`[utilitypay] listener for "${event}" threw`, err); }
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. The engine                                                       */
+/* ------------------------------------------------------------------ */
+
+const STORAGE_KEY = 'utilitypay.state.v1';
+
+/**
+ * @typedef {Object} Biller
+ * @property {string} id
+ * @property {string} name
+ * @property {string} category
+ *
+ * @typedef {Object} UtilityAccount
+ * @property {string}  id
+ * @property {string}  billerId
+ * @property {string}  nickname
+ * @property {string}  accountNumber
+ * @property {number}  outstandingPaise
+ * @property {string}  dueDate          ISO date (yyyy-mm-dd)
+ * @property {boolean} autoPay
+ * @property {string|null} lastPaidAt
+ *
+ * @typedef {Object} Payment
+ * @property {string} id
+ * @property {string} accountId
+ * @property {number} amountPaise     // what the user pays for the bill
+ * @property {number} feePaise        // platform fee
+ * @property {string} method
+ * @property {string} status
+ * @property {string} reference       // gateway reference
+ * @property {string} idempotencyKey
+ * @property {string} createdAt
+ *
+ * @typedef {Object} State
+ * @property {number} walletPaise
+ * @property {Biller[]} billers
+ * @property {UtilityAccount[]} accounts
+ * @property {Payment[]} payments
+ */
+
+class UtilityPayEngine {
+  /**
+   * @param {Object} [opts]
+   * @param {State} [opts.initialState]
+   * @param {Storage|null} [opts.storage]  localStorage-like, or null to run in-memory
+   * @param {() => number} [opts.now]        clock injection (tests)
+   * @param {(prefix: string) => string} [opts.idFactory]
+   * @param {(msg: {reference: string, amountPaise: number, method: string}) => boolean} [opts.gateway]
+   *        Returns true = charge approved. Default approves everything.
+   */
+  constructor(opts = {}) {
+    this.events = new Emitter();
+    this._storage = opts.storage === undefined ? safeLocalStorage() : opts.storage;
+    this._now = opts.now ?? (() => Date.now());
+    this._id = opts.idFactory ?? ((p) => `${p}_${Math.random().toString(36).slice(2, 10)}`);
+    this._gateway = opts.gateway ?? (() => true);
+    this._inFlight = new Set(); // idempotency keys currently being charged
+
+    this.state = this._storage ? this._load() ?? freshState() : opts.initialState ?? freshState();
+    if (opts.initialState && !this._storage) this.state = opts.initialState;
+    this._persist();
+  }
+
+  /* ---------------- state plumbing ---------------- */
+
+  _load() {
+    try {
+      const raw = this._storage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  _persist() {
+    this._commit();
+    if (!this._storage) return;
+    try { this._storage.setItem(STORAGE_KEY, JSON.stringify(this.state)); } catch { /* quota / private mode */ }
+  }
+
+  _commit() {
+    this.events.emit('change', this.getSummary());
+  }
+
+  subscribe(fn) {
+    return this.events.on('change', fn);
+  }
+
+  reset() {
+    this.state = freshState();
+    this._persist();
+  }
+
+  /* ---------------- reads ---------------- */
+
+  getBiller(id) {
+    return this.state.billers.find((b) => b.id === id) ?? null;
+  }
+
+  /** Accounts joined with biller info + derived fields, optionally filtered. */
+  listAccounts({ category, query, onlyDue } = {}) {
+    const q = (query ?? '').trim().toLowerCase();
+    return this.state.accounts
+      .map((acc) => {
+        const biller = this.getBiller(acc.billerId);
+        return {
+          ...acc,
+          biller,
+          category: biller?.category ?? 'other',
+          isOverdue: acc.outstandingPaise > 0 && new Date(acc.dueDate) < new Date(this._now()),
+        };
+      })
+      .filter((a) => (category ? a.category === category : true))
+      .filter((a) => (onlyDue ? a.outstandingPaise > 0 : true))
+      .filter((a) =>
+        q
+          ? a.nickname.toLowerCase().includes(q) ||
+            a.accountNumber.toLowerCase().includes(q) ||
+            (a.biller?.name ?? '').toLowerCase().includes(q)
+          : true)
+      .sort((a, b) => {
+        // Overdue first, then by due date, then by amount.
+        if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+        const d = a.dueDate.localeCompare(b.dueDate);
+        return d !== 0 ? d : b.outstandingPaise - a.outstandingPaise;
+      });
+  }
+
+  listPayments({ accountId, status } = {}) {
+    return this.state.payments
+      .filter((p) => (accountId ? p.accountId === accountId : true))
+      .filter((p) => (status ? p.status === status : true))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  /** Dashboard numbers. Everything in paise except counts. */
+  getSummary() {
+    const accounts = this.listAccounts();
+    const due = accounts.filter((a) => a.outstandingPaise > 0);
+    const overdue = due.filter((a) => a.isOverdue);
+    const paidThisMonth = this.state.payments.filter(
+      (p) => p.status === PaymentStatus.SUCCESS && isSameMonth(p.createdAt, this._now()),
+    );
+    return {
+      walletPaise: this.state.walletPaise,
+      totalDuePaise: due.reduce((s, a) => s + a.outstandingPaise, 0),
+      overdueCount: overdue.length,
+      dueCount: due.length,
+      accountCount: accounts.length,
+      autoPayCount: accounts.filter((a) => a.autoPay).length,
+      paidThisMonthPaise: paidThisMonth.reduce((s, p) => s + p.amountPaise + p.feePaise, 0),
+      paymentCount: this.state.payments.length,
+    };
+  }
+
+  /** Estimated total needed to clear everything due today. */
+  quoteTotalDue(method = PaymentMethod.WALLET) {
+    const total = this.state.accounts.reduce((s, a) => s + a.outstandingPaise, 0);
+    const fee = this.state.accounts.filter((a) => a.outstandingPaise > 0).length * (FEES_PAISE[method] ?? 0);
+    return { totalPaise: total + fee, feePaise: fee };
+  }
+
+  /* ---------------- writes ---------------- */
+
+  addAccount({ billerId, nickname, accountNumber, outstandingPaise = 0, dueDate, autoPay = false }) {
+    if (!this.getBiller(billerId)) throw new Error(`Unknown biller "${billerId}"`);
+    if (!Validation.isAccountNumber(accountNumber)) {
+      throw new Error('Account number must be 6–20 letters or digits.');
+    }
+    if (this.state.accounts.some((a) => a.billerId === billerId && a.accountNumber === accountNumber)) {
+      throw new Error('That account is already linked.');
+    }
+    /** @type {UtilityAccount} */
+    const account = {
+      id: this._id('acc'),
+      billerId,
+      nickname: nickname?.trim() || this.getBiller(billerId).name,
+      accountNumber: accountNumber.trim().toUpperCase(),
+      outstandingPaise: Math.max(0, Math.round(outstandingPaise)),
+      dueDate: dueDate ?? isoDate(addDays(this._now(), 7)),
+      autoPay,
+      lastPaidAt: null,
+    };
+    this.state.accounts.push(account);
+    this._persist();
+    return account;
+  }
+
+  removeAccount(accountId) {
+    const before = this.state.accounts.length;
+    this.state.accounts = this.state.accounts.filter((a) => a.id !== accountId);
+    if (this.state.accounts.length !== before) this._persist();
+  }
+
+  setAutoPay(accountId, enabled) {
+    const acc = this.state.accounts.find((a) => a.id === accountId);
+    if (!acc) throw new Error('Account not found');
+    acc.autoPay = Boolean(enabled);
+    this._persist();
+    return acc;
+  }
+
+  topUpWallet(amountPaise) {
+    if (!Validation.isPayableAmount(amountPaise, { min: 100, max: 100_000_00 })) {
+      throw new Error('Top-up must be between ₹1 and ₹1,00,000.');
+    }
+    this.state.walletPaise += amountPaise;
+    this._persist();
+    return this.state.walletPaise;
+  }
+
+  /**
+   * Pay a bill. Idempotent per (accountId + amount) within a 60s window unless
+   * you pass an explicit `idempotencyKey`.
+   *
+   * @returns {Promise<Payment>} resolves for both success and failed statuses;
+   *          rejects only on validation / programmer error.
+   */
+  async payBill({ accountId, amountPaise, method = PaymentMethod.WALLET, idempotencyKey }) {
+    const account = this.state.accounts.find((a) => a.id === accountId);
+    if (!account) throw new Error('Account not found');
+    if (!Validation.isMethod(method)) throw new Error(`Unsupported payment method "${method}"`);
+    if (!Validation.isPayableAmount(amountPaise)) {
+      throw new Error('Enter an amount between ₹1 and ₹1,00,000.');
+    }
+
+    const key = idempotencyKey ?? `${accountId}:${amountPaise}:${Math.floor(this._now() / 60_000)}`;
+
+    // Replay: same key already attempted -> return the stored attempt.
+    const existing = this.state.payments.find((p) => p.idempotencyKey === key);
+    if (existing) return existing;
+    if (this._inFlight.has(key)) {
+      await new Promise((r) => setTimeout(r, 250));
+      return this.state.payments.find((p) => p.idempotencyKey === key) ?? Promise.reject(new Error('Payment vanished'));
+    }
+
+    const feePaise = FEES_PAISE[method] ?? 0;
+    const totalPaise = amountPaise + feePaise;
+
+    /** @type {Payment} */
+    const payment = {
+      id: this._id('pay'),
+      accountId,
+      amountPaise,
+      feePaise,
+      method,
+      status: PaymentStatus.PENDING,
+      reference: `UP${this._now().toString(36).toUpperCase().slice(-8)}`,
+      idempotencyKey: key,
+      createdAt: new Date(this._now()).toISOString(),
+    };
+
+    // Wallet is debited up-front; other rails charge externally then settle.
+    if (method === PaymentMethod.WALLET && this.state.walletPaise < totalPaise) {
+      payment.status = PaymentStatus.FAILED;
+      payment.failureReason = 'insufficient_funds';
+      this.state.payments.push(payment);
+      this._persist();
+      this.events.emit('payment:failed', payment);
+      return payment;
+    }
+
+    this._inFlight.add(key);
+    this.state.payments.push(payment);
+    this._persist();
+    this.events.emit('payment:pending', payment);
+
+    // Simulated PSP round-trip. Replace with a real edge function call.
+    await new Promise((resolve) => setTimeout(resolve, 550 + Math.random() * 350));
+    this._inFlight.delete(key);
+
+    const approved = this._gateway({
+      reference: payment.reference,
+      amountPaise: totalPaise,
+      method,
+    });
+
+    if (!approved) {
+      payment.status = PaymentStatus.FAILED;
+      payment.failureReason = 'gateway_declined';
+      this._persist();
+      this.events.emit('payment:failed', payment);
+      return payment;
+    }
+
+    // Settle: debit wallet, reduce outstanding, stamp the account.
+    if (method === PaymentMethod.WALLET) this.state.walletPaise -= totalPaise;
+    account.outstandingPaise = Math.max(0, account.outstandingPaise - amountPaise);
+    account.lastPaidAt = payment.createdAt;
+    payment.status = PaymentStatus.SUCCESS;
+    payment.settledAt = new Date(this._now()).toISOString();
+    this._persist();
+    this.events.emit('payment:success', payment);
+    return payment;
+  }
+
+  /** Retry a failed payment with its original amount/method. */
+  retryPayment(paymentId) {
+    const original = this.state.payments.find((p) => p.id === paymentId);
+    if (!original) throw new Error('Payment not found');
+    if (original.status !== PaymentStatus.FAILED) throw new Error('Only failed payments can be retried');
+    return this.payBill({
+      accountId: original.accountId,
+      amountPaise: original.amountPaise,
+      method: original.method,
+      idempotencyKey: `retry:${paymentId}:${this._now()}`,
+    });
+  }
+
+  /** Run due auto-pays (call from a cron/edge function once a day). */
+  async runAutoPay({ today = this._now() } = {}) {
+    const results = [];
+    for (const acc of this.state.accounts) {
+      if (!acc.autoPay || acc.outstandingPaise <= 0) continue;
+      if (new Date(acc.dueDate) > new Date(today)) continue;
+      const feePaise = FEES_PAISE[PaymentMethod.WALLET] ?? 0;
+      if (this.state.walletPaise < acc.outstandingPaise + feePaise) continue;
+      results.push(await this.payBill({
+        accountId: acc.id,
+        amountPaise: acc.outstandingPaise,
+        method: PaymentMethod.WALLET,
+        idempotencyKey: `autopay:${acc.id}:${isoDate(today)}`,
+      }));
+    }
+    return results;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 6. Utilities                                                        */
+/* ------------------------------------------------------------------ */
+
+function isoDate(ms) {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+function addDays(ms, days) {
+  return ms + days * 86_400_000;
+}
+
+function isSameMonth(isoString, ms) {
+  const a = new Date(isoString);
+  const b = new Date(ms);
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+function safeLocalStorage() {
+  try {
+    const probe = '__up_probe__';
+    globalThis.localStorage.setItem(probe, '1');
+    globalThis.localStorage.removeItem(probe);
+    return globalThis.localStorage;
+  } catch { return null; }
+}
+
+/** Seed data shaped like a real Indian utility dashboard. */
+function freshState() {
+  const today = Date.now();
+  const billers = [
+    { id: 'blr_elec', name: 'BESCOM Electricity', category: Category.ELECTRICITY },
+    { id: 'bwssb', name: 'BWSSB Water', category: Category.WATER },
+    { id: 'indane', name: 'Indane Gas', category: Category.GAS },
+    { id: 'act', name: 'ACT Fibernet', category: Category.INTERNET },
+    { id: 'airtel', name: 'Airtel Postpaid', category: Category.MOBILE },
+    { id: 'tatasky', name: 'Tata Play DTH', category: Category.DTH },
+  ];
+  const accounts = [
+    { id: 'acc_home_elec', billerId: 'blr_elec', nickname: 'Home electricity', accountNumber: 'BLR88214310',
+      outstandingPaise: 234_050, dueDate: isoDate(addDays(today, 3)), autoPay: true, lastPaidAt: null },
+    { id: 'acc_home_water', billerId: 'bwssb', nickname: 'Home water', accountNumber: 'WTR5591027',
+      outstandingPaise: 61_800, dueDate: isoDate(addDays(today, 9)), autoPay: false, lastPaidAt: null },
+    { id: 'acc_gas', billerId: 'indane', nickname: 'Kitchen gas', accountNumber: 'IND7712004',
+      outstandingPaise: 110_000, dueDate: isoDate(addDays(today, -2)), autoPay: false, lastPaidAt: null },
+    { id: 'acc_net', billerId: 'act', nickname: 'Home broadband', accountNumber: 'ACT3009124',
+      outstandingPaise: 139_900, dueDate: isoDate(addDays(today, 5)), autoPay: true, lastPaidAt: null },
+    { id: 'acc_mobile', billerId: 'airtel', nickname: 'My mobile', accountNumber: 'AIR99321145',
+      outstandingPaise: 79_900, dueDate: isoDate(addDays(today, 12)), autoPay: false, lastPaidAt: null },
+    { id: 'acc_dth', billerId: 'tatasky', nickname: 'Living room DTH', accountNumber: 'TSK1200458',
+      outstandingPaise: 0, dueDate: isoDate(addDays(today, 18)), autoPay: false, lastPaidAt: null },
+  ];
+  return { walletPaise: 650_000, billers, accounts, payments: [] };
+}
+
+
+/* ================= end engine ================= */
+
+/* ============================================================
+   App state
+   ============================================================ */
+const engine = new UtilityPayEngine();
+const $ = (s) => document.querySelector(s);
+const store = {
+  route: 'home',
+  query: '',
+  filter: 'all',
+  recharge: { type: 'mobile', billerId: 'airtel', number: '', plan: 29900 },
+  method: 'wallet',
+  sheet: null,          // {type:'pay'|'receipt'|'topup'|'notify', ...}
+  submitting: false,
+  error: '',
+};
+
+const THEME_KEY = 'utilitypay.theme';
+const user = { name: 'Ananya', initials: 'AR' };
+
+/* ============================================================
+   Icons
+   ============================================================ */
+const P = {
+  home:'M3 10.5 12 3l9 7.5M5.5 9.5V21h13V9.5',
+  receipt:'M6 2h12a1 1 0 0 1 1 1v18l-3-2-2 2-2-2-2 2-2-2-3 2V3a1 1 0 0 1 1-1Z',
+  bolt:'m13 2-9 12h6l-1 8 9-12h-6l1-8Z',
+  phone:'M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Zm4 17h2',
+  clock:'M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+  settings:'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z',
+  droplet:'M12 3s6 6.3 6 10a6 6 0 0 1-12 0c0-3.7 6-10 6-10Z',
+  flame:'M12 2c1.5 4 5 5.5 5 9a5 5 0 0 1-10 0c0-1.6.6-2.9 1.5-4C9 9 10 9.6 10 11c0-3 2-5 2-9Z',
+  wifi:'M5 12.5a10 10 0 0 1 14 0M8.5 16a5.5 5.5 0 0 1 7 0M12 20h.01M2 9a15 15 0 0 1 20 0',
+  tv:'M3 6h18v11H3zM8 21h8M12 17v4',
+  plus:'M12 5v14M5 12h14',
+  check:'m4 12 5 5L20 6',
+  x:'M6 6l12 12M18 6 6 18',
+  search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20 20l-4-4',
+  download:'M12 3v12m0 0-4-4m4 4 4-4M4 21h16',
+  moon:'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z',
+  sun:'M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10ZM12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4',
+  bell:'M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 0 1-3.4 0',
+  wallet:'M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1H5a2 2 0 0 0-2 2V7Zm0 3h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9Z',
+  upi:'M4 12h16M12 4v16',
+  card:'M2 7h20v10H2zM2 11h20',
+  bank:'M3 10 12 4l9 6M5 10v9h14v-9M9 19v-5h6v5',
+  trash:'M4 7h16M9 7V4h6v3m-8 0 1 14h8l1-14',
+  arrow:'m9 6 6 6-6 6',
+  user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9a8 8 0 0 1 16 0',
+  shield:'M12 3l8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z',
+  sparkle:'M12 3v4m0 10v4M3 12h4m10 0h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18',
+  filter:'M3 5h18l-7 8v6l-4 2v-8L3 5Z',
+};
+const icon = (name, size = 18, sw = 2) =>
+  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="${sw}"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[name] || P.receipt}"/></svg>`;
+
+const CAT_ICON = { electricity:'bolt', water:'droplet', gas:'flame', internet:'wifi', mobile:'phone', dth:'tv' };
+const catIcon = (c) => CAT_ICON[c] || 'receipt';
+const METHOD_UI = {
+  wallet:   { label:'Wallet',     sub:'Instant · no fee',        icon:'wallet' },
+  upi:      { label:'UPI',        sub:'Instant · no fee',        icon:'upi' },
+  card:     { label:'Card',       sub:'Fee ' + Money.format(FEES_PAISE.card),      icon:'card' },
+  netbanking:{label:'Netbanking', sub:'Fee ' + Money.format(FEES_PAISE.netbanking), icon:'bank' },
+};
+
+/* ============================================================
+   Helpers
+   ============================================================ */
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const initials = (s) => s.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+const today = () => new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
+const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
+
+function dueMeta(acc) {
+  if (acc.outstandingPaise === 0) return { cls:'ok', text:'Paid' };
+  const days = Math.ceil((new Date(acc.dueDate) - new Date()) / 86400000);
+  if (days < 0) return { cls:'overdue', text:`Overdue ${Math.abs(days)}d` };
+  if (days === 0) return { cls:'soon', text:'Due today' };
+  if (days === 1) return { cls:'soon', text:'Due tomorrow' };
+  return { cls: days <= 3 ? 'soon' : 'ok', text:`Due in ${days}d` };
+}
+
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.dataset.show = 'true';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { el.dataset.show = 'false'; }, 2400);
+}
+
+/* ============================================================
+   Chrome: nav, theme
+   ============================================================ */
+const NAV = [
+  { id:'home',     label:'Home',     icon:'home' },
+  { id:'bills',    label:'Bills',    icon:'receipt' },
+  { id:'recharge', label:'Recharge', icon:'phone' },
+  { id:'history',  label:'History',  icon:'clock' },
+  { id:'settings', label:'Settings', icon:'settings' },
+];
+
+function renderChrome() {
+  const due = engine.getSummary().dueCount;
+  $('#sidenav').innerHTML = NAV.map((n) => `
+    <a class="navitem" href="#/${n.id}" ${store.route === n.id ? 'aria-current="page"' : ''}>
+      ${icon(n.icon, 17)}<span>${n.label}</span>
+      ${n.id === 'bills' && due ? `<span class="count">${due}</span>` : ''}
+    </a>`).join('');
+
+  $('#tabbar').innerHTML = NAV.map((n) => `
+    <a class="tab" href="#/${n.id}" ${store.route === n.id ? 'aria-current="page"' : ''}>
+      ${icon(n.icon, 20)}<span>${n.label}</span>
+    </a>`).join('');
+
+  const dark = document.documentElement.dataset.theme === 'dark';
+  $('#themeBtn').innerHTML = icon(dark ? 'sun' : 'moon', 17);
+  $('#bellBtn').innerHTML = icon('bell', 17);
+
+  const w = Money.format(engine.state.walletPaise);
+  $('#walletChip').textContent = w;
+  $('#walletSide').textContent = w;
+}
+
+/* ============================================================
+   Views
+   ============================================================ */
+function viewHome() {
+  const s = engine.getSummary();
+  const accounts = engine.listAccounts();
+  const due = accounts.filter((a) => a.outstandingPaise > 0);
+  const upcoming = due.slice(0, 4);
+  const recent = engine.listPayments().slice(0, 3);
+
+  return `
+    <div class="hello">
+      <h1>${greeting()}, ${user.name}</h1>
+      <p>${today()}</p>
+    </div>
+
+    <div class="hero" style="margin-top:14px">
+      <div class="row">
+        <div>
+          <div class="k">Total due</div>
+          <div class="v mono">${Money.format(s.totalDuePaise)}</div>
+          <div class="sub">${s.dueCount} bill${s.dueCount === 1 ? '' : 's'} to pay${s.overdueCount ? ` · ${s.overdueCount} overdue` : ' · nothing overdue'}</div>
+        </div>
+      </div>
+      <div class="acts">
+        <button class="btn" data-action="pay-all">Pay all bills</button>
+        <button class="btn ghosty" data-action="topup">Add money</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Wallet</div><div class="v mono">${Money.format(s.walletPaise)}</div></div>
+      <div class="stat"><div class="k">Paid this month</div><div class="v mono">${Money.format(s.paidThisMonthPaise)}</div></div>
+      <div class="stat"><div class="k">AutoPay</div><div class="v">${s.autoPayCount} <span class="tiny muted">of ${s.accountCount}</span></div></div>
+    </div>
+
+    <div class="section"><h2>Quick pay</h2></div>
+    <div class="quick">
+      ${['electricity','water','gas','internet','mobile','dth'].map((c) => {
+        const meta = CATEGORY_META[c];
+        return `<button data-action="quick" data-cat="${c}">
+          <span class="ico" style="background:${meta.color}1f;color:${meta.color}">${icon(catIcon(c), 17)}</span>${meta.label}
+        </button>`;
+      }).join('')}
+      <button data-action="route" data-route="recharge">
+        <span class="ico" style="background:var(--primary-soft);color:var(--primary)">${icon('phone', 17)}</span>Recharge
+      </button>
+      <button data-action="route" data-route="bills">
+        <span class="ico" style="background:var(--muted);color:var(--muted-fg)">${icon('plus', 17)}</span>All bills
+      </button>
+    </div>
+
+    <div class="section"><h2>Upcoming</h2><a class="link" href="#/bills">View all</a></div>
+    ${upcoming.length ? `<div class="bills card divide">${upcoming.map(billRow).join('')}</div>`
+      : emptyState('check', 'Nothing due', 'Every linked bill is settled.')}
+
+    <div class="section"><h2>Recent activity</h2><a class="link" href="#/history">History</a></div>
+    ${recent.length ? `<div class="bills card divide">${recent.map(txRow).join('')}</div>`
+      : emptyState('clock', 'No payments yet', 'Your receipts will appear here.')}
+  `;
+}
+
+function billRow(acc) {
+  const meta = CATEGORY_META[acc.category] ?? { color:'#71717a', label:'Utility' };
+  const d = dueMeta(acc);
+  return `<div class="bill">
+    <span class="ico" style="background:${meta.color}1f;color:${meta.color}">${icon(catIcon(acc.category), 18)}</span>
+    <span class="txt">
+      <b>${esc(acc.nickname)}</b>
+      <span>${esc(acc.biller?.name ?? '')} · ${esc(acc.accountNumber)}</span>
+    </span>
+    <span class="amt">
+      <b class="mono">${Money.format(acc.outstandingPaise)}</b>
+      <span class="chip ${d.cls}">${d.text}</span>
+    </span>
+    ${acc.outstandingPaise > 0
+      ? `<button class="btn primary sm" data-action="pay" data-id="${acc.id}">Pay</button>`
+      : `<button class="btn outline sm" data-action="receipt-last" data-id="${acc.id}">Receipt</button>`}
+  </div>`;
+}
+
+function txRow(p) {
+  const acc = engine.state.accounts.find((a) => a.id === p.accountId);
+  const when = new Date(p.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'numeric', minute:'2-digit' });
+  const m = METHOD_UI[p.method] ?? { label: p.method, icon:'wallet' };
+  return `<div class="bill" data-action="tx" data-id="${p.id}" style="cursor:pointer">
+    <span class="ico" style="background:var(--muted);color:var(--muted-fg)">${icon('receipt', 18)}</span>
+    <span class="txt">
+      <b>${esc(acc ? acc.nickname : 'Bill payment')}</b>
+      <span>${when} · ${m.label} · ${esc(p.reference)}</span>
+    </span>
+    <span class="amt">
+      <b class="mono">${Money.format(p.amountPaise + p.feePaise)}</b>
+      <span class="chip ${p.status === 'success' ? 'ok' : p.status === 'failed' ? 'overdue' : 'soon'}">${p.status}</span>
+    </span>
+    ${icon('arrow', 16)}</div>`;
+}
+
+function emptyState(ic, title, sub) {
+  return `<div class="card empty"><div class="ico">${icon(ic, 20)}</div><b>${title}</b><span class="tiny">${sub}</span></div>`;
+}
+
+function viewBills() {
+  const isCat = (f) => f !== 'all' && f !== 'unpaid';
+  const all = engine.listAccounts({
+    category: isCat(store.filter) ? store.filter : undefined,
+    query: store.query,
+    onlyDue: store.filter === 'unpaid',
+  });
+  const cats = ['all', ...new Set(engine.state.billers.map((b) => b.category))];
+  return `
+    <div class="hello"><h1>All bills</h1><p>${engine.state.accounts.length} linked accounts · ${engine.getSummary().dueCount} unpaid</p></div>
+
+    <div style="display:flex;gap:8px;margin:16px 0 12px;flex-wrap:wrap">
+      <label style="flex:1 1 220px;display:flex;align-items:center;gap:8px;padding:0 12px;height:40px;border:1px solid var(--border);border-radius:10px;background:var(--card)">
+        ${icon('search', 16)}
+        <input id="billSearch" placeholder="Search bills or account numbers" value="${esc(store.query)}"
+               style="border:none;outline:none;background:none;width:100%;font-size:13.5px" />
+      </label>
+      <button class="btn outline" data-action="toggle-unpaid">${icon('filter', 15)} ${store.filter === 'unpaid' ? 'Showing unpaid' : 'Only unpaid'}</button>
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      ${cats.map((c) => {
+        const active = store.filter === c;
+        const label = c === 'all' ? 'All' : (CATEGORY_META[c]?.label ?? c);
+        return `<button class="chip ${active ? 'brand' : 'neutral'}" style="border:1px solid ${active ? 'transparent' : 'var(--border)'}"
+                        data-action="filter" data-cat="${c}">${label}</button>`;
+      }).join('')}
+    </div>
+
+    ${all.length ? `<div class="bills card divide">${all.map(billRow).join('')}</div>`
+      : emptyState('search', 'No bills match', 'Try a different search or clear the filters.')}
+
+    <div class="section"><h2>Add a biller</h2></div>
+    <div class="card" style="padding:14px">
+      <p class="tiny muted" style="margin:0 0 12px">Link an electricity, water, gas, broadband, mobile or DTH account. Demo mode stores it locally.</p>
+      <form id="addForm" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field" style="margin:0;grid-column:1/-1">
+          <label>Biller</label>
+          <select class="input" name="billerId">
+            ${engine.state.billers.map((b) => `<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Account number</label>
+          <input class="input" name="accountNumber" placeholder="BLR88214310" required />
+        </div>
+        <div class="field" style="margin:0">
+          <label>Nickname</label>
+          <input class="input" name="nickname" placeholder="Home electricity" />
+        </div>
+        <div class="field" style="margin:0">
+          <label>Amount due (₹)</label>
+          <input class="input" name="amount" type="number" min="0" step="0.01" value="0" />
+        </div>
+        <div class="field" style="margin:0">
+          <label>Due date</label>
+          <input class="input" name="dueDate" type="date" />
+        </div>
+        <button class="btn primary" style="grid-column:1/-1;margin-top:4px">Link account</button>
+      </form>
+      <div id="addError"></div>
+    </div>
+  `;
+}
+
+function viewRecharge() {
+  const r = store.recharge;
+  const billers = engine.state.billers.filter((b) =>
+    r.type === 'mobile' ? b.category === 'mobile' : r.type === 'dth' ? b.category === 'dth' : b.category === 'internet');
+  const plans = r.type === 'mobile'
+    ? [{ v:19900, d:'1.5 GB/day · 28 days' }, { v:29900, d:'2 GB/day · 28 days' }, { v:39900, d:'2.5 GB/day · 28 days' }, { v:71900, d:'2 GB/day · 84 days' }]
+    : [{ v:19900, d:'Hindi Value · 1 month' }, { v:29900, d:'Hindi Lite · 1 month' }, { v:39900, d:'Hindi Value HD · 1 month' }, { v:44900, d:'Sports Pack · 1 month' }];
+
+  return `
+    <div class="hello"><h1>Recharge</h1><p>Mobile, DTH and broadband top-ups</p></div>
+
+    <div class="card" style="padding:16px;margin-top:16px">
+      <div class="segmented" style="margin-bottom:16px">
+        ${[['mobile','Mobile'],['dth','DTH'],['broadband','Broadband']].map(([id,label]) => `
+          <button data-action="retype" data-type="${id}" aria-pressed="${r.type === id}">${label}</button>`).join('')}
+      </div>
+
+      <div class="field">
+        <label>Operator</label>
+        <select class="input" id="rcBiller">
+          ${billers.map((b) => `<option value="${b.id}" ${r.billerId === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>${r.type === 'broadband' ? 'Subscriber ID' : 'Mobile / subscriber number'}</label>
+        <input class="input" id="rcNumber" inputmode="numeric" placeholder="98765 43210"
+               value="${esc(r.number)}" />
+      </div>
+
+      <div class="field">
+        <label>Pick a plan</label>
+        <div class="plans">
+          ${plans.map((p) => `<button class="plan" data-action="plan" data-plan="${p.v}" aria-pressed="${r.plan === p.v}">
+            <b class="mono">${Money.format(p.v)}</b><span>${p.d}</span></button>`).join('')}
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Or enter an amount (₹)</label>
+        <input class="input mono" id="rcAmount" type="number" min="10" step="1" value="${(r.plan / 100).toFixed(0)}" />
+      </div>
+
+      <div class="lines" style="margin-bottom:14px">
+        <div><span>Plan</span><b class="mono">${Money.format(r.plan)}</b></div>
+        <div><span>Convenience fee</span><b>${FEES_PAISE[store.method] ? Money.format(FEES_PAISE[store.method]) : 'Free'}</b></div>
+        <div class="total"><span>Total</span><span class="mono">${Money.format(r.plan + (FEES_PAISE[store.method] ?? 0))}</span></div>
+      </div>
+
+      <button class="btn primary block" data-action="recharge-pay">Proceed to pay</button>
+    </div>
+  `;
+}
+
+function viewHistory() {
+  const txs = engine.listPayments();
+  const groups = {};
+  for (const p of txs) {
+    const d = new Date(p.createdAt);
+    const key = d.toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+    (groups[key] ||= []).push(p);
+  }
+  const spent = txs.filter((p) => p.status === 'success').reduce((s, p) => s + p.amountPaise + p.feePaise, 0);
+
+  return `
+    <div class="hello"><h1>Payment history</h1><p>${txs.length} transaction${txs.length === 1 ? '' : 's'} · ${Money.format(spent)} paid</p></div>
+    ${txs.length ? Object.entries(groups).map(([date, list]) => `
+      <div class="section"><h2 style="font-size:13px;color:var(--muted-fg);text-transform:uppercase;letter-spacing:.05em">${date}</h2></div>
+      <div class="bills card divide">${list.map(txRow).join('')}</div>
+    `).join('') : emptyState('clock', 'No transactions', 'Pay a bill or recharge to see it here.')}
+  `;
+}
+
+function viewSettings() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  const accounts = engine.listAccounts();
+  return `
+    <div class="hello"><h1>Settings</h1><p>Profile, wallet and preferences</p></div>
+
+    <div class="card" style="padding:16px;margin-top:16px;display:flex;align-items:center;gap:12px">
+      <div class="avatar" style="width:46px;height:46px;font-size:15px">${user.initials}</div>
+      <div style="flex:1">
+        <b style="font-size:15px">Ananya Rao</b>
+        <div class="tiny muted">ananya.r@example.com · +91 98765 43210</div>
+      </div>
+      <span class="chip brand">Verified</span>
+    </div>
+
+    <div class="section"><h2>Wallet</h2></div>
+    <div class="card" style="padding:16px">
+      <div class="tiny muted">Available balance</div>
+      <div style="font-size:26px;font-weight:750;letter-spacing:-.02em" class="mono">${Money.format(engine.state.walletPaise)}</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        ${[50000, 100000, 200000].map((a) => `<button class="btn outline sm" data-action="topup-amt" data-amt="${a}">+ ${Money.format(a, { withSymbol: true })}</button>`).join('')}
+        <button class="btn primary sm" data-action="topup">Custom</button>
+      </div>
+    </div>
+
+    <div class="section"><h2>AutoPay</h2><span class="tiny muted" style="margin-left:auto">Debits 1 day before due</span></div>
+    <div class="card divide">
+      ${accounts.map((a) => `
+        <div class="srow">
+          <span class="ico">${icon(catIcon(a.category), 16)}</span>
+          <span class="txt"><b>${esc(a.nickname)}</b><span>${esc(a.biller?.name ?? '')}</span></span>
+          <button class="switch" role="switch" aria-checked="${a.autoPay}" data-action="autopay" data-id="${a.id}" aria-label="AutoPay for ${esc(a.nickname)}"></button>
+        </div>`).join('')}
+    </div>
+
+    <div class="section"><h2>Preferences</h2></div>
+    <div class="card divide">
+      <div class="srow">
+        <span class="ico">${icon(dark ? 'moon' : 'sun', 16)}</span>
+        <span class="txt"><b>Appearance</b><span>${dark ? 'Dark' : 'Light'} theme</span></span>
+        <button class="switch" role="switch" aria-checked="${dark}" data-action="theme" aria-label="Dark mode"></button>
+      </div>
+      <div class="srow">
+        <span class="ico">${icon('bell', 16)}</span>
+        <span class="txt"><b>Bill reminders</b><span>Push 3 days before due date</span></span>
+        <button class="switch" role="switch" aria-checked="true" data-action="toggle-reminders" aria-label="Reminders"></button>
+      </div>
+      <div class="srow">
+        <span class="ico">${icon('shield', 16)}</span>
+        <span class="txt"><b>Biometric lock</b><span>Ask for fingerprint on open</span></span>
+        <button class="switch" role="switch" aria-checked="false" data-action="toggle-bio" aria-label="Biometric"></button>
+      </div>
+    </div>
+
+    <div class="section"><h2>Data</h2></div>
+    <div class="card divide">
+      <div class="srow" data-action="reset" style="cursor:pointer">
+        <span class="ico" style="color:var(--destructive)">${icon('trash', 16)}</span>
+        <span class="txt"><b>Reset demo data</b><span>Restore the seeded bills and wallet</span></span>
+        ${icon('arrow', 16)}
+      </div>
+      <div class="srow">
+        <span class="ico">${icon('sparkle', 16)}</span>
+        <span class="txt"><b>About Flexible Recharge</b><span>Flexible Recharge for Electricity, Water and Gas Bill</span></span>
+      </div>
+    </div>
+    <p class="tiny muted" style="text-align:center;margin:22px 0 0">Flexible Recharge v1.0 · data stays in your browser</p>
+  `;
+}
+
+const VIEWS = { home: viewHome, bills: viewBills, recharge: viewRecharge, history: viewHistory, settings: viewSettings };
+
+function render() {
+  renderChrome();
+  $('#view').innerHTML = (VIEWS[store.route] ?? viewHome)();
+  const search = $('#billSearch');
+  if (search) {
+    search.addEventListener('input', (e) => {
+      store.query = e.target.value;
+      const pos = e.target.selectionStart;
+      $('#view').innerHTML = viewBills();
+      const next = $('#billSearch');
+      next.focus(); next.setSelectionRange(pos, pos);
+    });
+  }
+  const addForm = $('#addForm');
+  if (addForm) addForm.addEventListener('submit', onAddAccount);
+  if (store.sheet) renderSheet();
+}
+
+/* ============================================================
+   Sheets
+   ============================================================ */
+function openSheet(sheet) { store.sheet = sheet; store.error = ''; render(); renderSheet(); $('#scrim').dataset.open = 'true'; }
+function closeSheet() { store.sheet = null; store.error = ''; $('#scrim').dataset.open = 'false'; $('#sheet').innerHTML = ''; }
+
+function renderSheet() {
+  const s = store.sheet;
+  if (!s) return;
+  if (s.type === 'pay') $('#sheet').innerHTML = sheetPay(s);
+  else if (s.type === 'receipt') $('#sheet').innerHTML = sheetReceipt(s);
+  else if (s.type === 'topup') $('#sheet').innerHTML = sheetTopup();
+  else if (s.type === 'notify') $('#sheet').innerHTML = sheetNotify();
+  if (s.type === 'pay') {
+    const amount = $('#payAmount');
+    if (amount) amount.addEventListener('input', () => {
+      s.amountPaise = Math.round(Number(amount.value) * 100) || 0;
+      const lines = $('#payLines');
+      if (lines) lines.outerHTML = payLines(s);
+    });
+  }
+}
+
+function payLines(s) {
+  const fee = FEES_PAISE[store.method] ?? 0;
+  const amt = s.amountPaise ?? 0;
+  const short = store.method === 'wallet' && engine.state.walletPaise < amt + fee;
+  return `<div class="lines" id="payLines">
+    <div><span>Bill amount</span><b class="mono">${Money.format(amt)}</b></div>
+    <div><span>Convenience fee</span><b class="mono">${fee ? Money.format(fee) : 'Free'}</b></div>
+    <div><span>Wallet balance</span><b class="mono">${Money.format(engine.state.walletPaise)}</b></div>
+    <div class="total"><span>Total payable</span><span class="mono">${Money.format(amt + fee)}</span></div>
+    ${short ? `<div style="color:var(--destructive);font-size:12px;font-weight:600;padding-top:6px">Wallet is short by ${Money.format(amt + fee - engine.state.walletPaise)} — top up or pay by UPI.</div>` : ''}
+  </div>`;
+}
+
+function sheetPay(s) {
+  if (s.result) {
+    const ok = s.result.status === 'success';
+    return `<div class="done">
+      <div class="tick ${ok ? '' : 'bad'}">${icon(ok ? 'check' : 'x', 26, 2.4)}</div>
+      <h3>${ok ? 'Payment successful' : 'Payment failed'}</h3>
+      <p>${ok ? 'The biller has been notified.' : 'Wallet balance was too low for this payment.'}</p>
+      <div class="lines">
+        <div><span>Reference</span><b class="mono">${esc(s.result.reference)}</b></div>
+        <div><span>Method</span><b>${METHOD_UI[s.result.method].label}</b></div>
+        <div><span>Amount</span><b class="mono">${Money.format(s.result.amountPaise)}</b></div>
+        <div><span>Fee</span><b class="mono">${s.result.feePaise ? Money.format(s.result.feePaise) : 'Free'}</b></div>
+        <div class="total"><span>${ok ? 'Paid' : 'Attempted'}</span><span class="mono">${Money.format(s.result.amountPaise + s.result.feePaise)}</span></div>
+      </div>
+      <button class="btn block" style="margin-top:16px" data-action="close-sheet">Done</button>
+    </div>`;
+  }
+  const acc = engine.listAccounts().find((a) => a.id === s.accountId);
+  const label = s.kind === 'recharge'
+    ? `${esc(s.operatorName)} · ${esc(s.number)}`
+    : `${esc(acc.biller?.name ?? '')} · ${esc(acc.accountNumber)}`;
+  return `
+    <div class="sheet-head">
+      <div><h3>${s.kind === 'recharge' ? 'Confirm recharge' : 'Pay bill'}</h3><p>${label}</p></div>
+      <button class="iconbtn x" data-action="close-sheet" aria-label="Close">${icon('x', 17)}</button>
+    </div>
+    ${store.error ? `<div class="err">${esc(store.error)}</div>` : ''}
+    <div class="field">
+      <label>Amount (₹)</label>
+      <input class="input mono" id="payAmount" type="number" min="1" step="0.01"
+             value="${((s.amountPaise ?? 0) / 100).toFixed(2)}" ${s.kind === 'recharge' ? 'readonly' : ''} />
+    </div>
+    <div class="field">
+      <label>Pay with</label>
+      <div class="methods">
+        ${Object.entries(METHOD_UI).map(([id, m]) => `
+          <button class="method" data-action="method" data-method="${id}" aria-pressed="${store.method === id}">
+            ${icon(m.icon, 17)}<span><b>${m.label}</b><span>${m.sub}</span></span>
+          </button>`).join('')}
+      </div>
+    </div>
+    ${payLines(s)}
+    <button class="btn primary block" style="margin-top:16px" data-action="submit-pay" ${store.submitting ? 'disabled' : ''}>
+      ${store.submitting ? '<span class="spinner"></span> Processing…' : `Pay ${Money.format((s.amountPaise ?? 0) + (FEES_PAISE[store.method] ?? 0))}`}
+    </button>`;
+}
+
+function sheetReceipt(s) {
+  const p = s.payment;
+  const acc = engine.state.accounts.find((a) => a.id === p.accountId);
+  return `
+    <div class="sheet-head">
+      <div><h3>Receipt</h3><p>${esc(p.reference)}</p></div>
+      <button class="iconbtn x" data-action="close-sheet" aria-label="Close">${icon('x', 17)}</button>
+    </div>
+    <div class="lines">
+      <div><span>Status</span><b><span class="chip ${p.status === 'success' ? 'ok' : p.status === 'failed' ? 'overdue' : 'soon'}">${p.status}</span></b></div>
+      <div><span>Biller</span><b>${esc(acc?.biller?.name ?? '—')}</b></div>
+      <div><span>Account</span><b>${esc(acc?.accountNumber ?? '—')}</b></div>
+      <div><span>Date</span><b>${new Date(p.createdAt).toLocaleString('en-IN')}</b></div>
+      <div><span>Method</span><b>${METHOD_UI[p.method].label}</b></div>
+      <div><span>Bill amount</span><b class="mono">${Money.format(p.amountPaise)}</b></div>
+      <div><span>Convenience fee</span><b class="mono">${p.feePaise ? Money.format(p.feePaise) : 'Free'}</b></div>
+      <div class="total"><span>Total paid</span><span class="mono">${Money.format(p.amountPaise + p.feePaise)}</span></div>
+    </div>
+    <button class="btn outline block" style="margin-top:16px" data-action="download" data-id="${p.id}">${icon('download', 15)} Download receipt</button>
+    ${p.status === 'failed' ? `<button class="btn primary block" style="margin-top:8px" data-action="retry" data-id="${p.id}">Retry payment</button>` : ''}
+  `;
+}
+
+function sheetTopup() {
+  return `
+    <div class="sheet-head">
+      <div><h3>Add money</h3><p>Instantly available for bill payments</p></div>
+      <button class="iconbtn x" data-action="close-sheet" aria-label="Close">${icon('x', 17)}</button>
+    </div>
+    <div class="field">
+      <label>Amount (₹)</label>
+      <input class="input mono" id="topupAmount" type="number" min="1" step="1" value="1000" />
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      ${[50000, 100000, 200000, 500000].map((a) => `<button class="btn outline sm" data-action="topup-amt" data-amt="${a}">${Money.format(a)}</button>`).join('')}
+    </div>
+    <div class="lines"><div><span>Current balance</span><b class="mono">${Money.format(engine.state.walletPaise)}</b></div></div>
+    <button class="btn primary block" style="margin-top:14px" data-action="submit-topup">Add money</button>`;
+}
+
+function sheetNotify() {
+  const s = engine.getSummary();
+  const rows = engine.listAccounts().filter((a) => a.outstandingPaise > 0).slice(0, 4);
+  return `
+    <div class="sheet-head">
+      <div><h3>Notifications</h3><p>${s.dueCount} bill${s.dueCount === 1 ? '' : 's'} needing attention</p></div>
+      <button class="iconbtn x" data-action="close-sheet" aria-label="Close">${icon('x', 17)}</button>
+    </div>
+    <div class="card divide" style="border-radius:12px">
+      ${rows.map((a) => {
+        const d = dueMeta(a);
+        return `<div class="bill">
+          <span class="ico" style="background:var(--muted);color:var(--muted-fg)">${icon('bell', 17)}</span>
+          <span class="txt"><b>${esc(a.nickname)} ${d.cls === 'overdue' ? 'is overdue' : 'is due soon'}</b>
+          <span>${Money.format(a.outstandingPaise)} · ${esc(a.biller?.name ?? '')}</span></span>
+          <button class="btn primary sm" data-action="pay" data-id="${a.id}">Pay</button>
+        </div>`;
+      }).join('') || `<div class="bill"><span class="txt"><b>You're all caught up</b><span>No reminders right now.</span></span></div>`}
+    </div>
+    <p class="tiny muted" style="text-align:center;margin-top:14px">Reminders are simulated in this demo.</p>`;
+}
+
+/* ============================================================
+   Actions
+   ============================================================ */
+async function submitPayment() {
+  const s = store.sheet;
+  if (!s || s.type !== 'pay' || store.submitting) return;
+  const amount = s.amountPaise ?? 0;
+  store.submitting = true;
+  store.error = '';
+  renderSheet();
+  try {
+    let payment;
+    if (s.kind === 'recharge') {
+      // Recharges are modelled as a prepaid "account" so they share the payment ledger.
+      let acc = engine.state.accounts.find((a) => a.billerId === s.billerId && a.accountNumber === s.number);
+      if (!acc) {
+        acc = engine.addAccount({ billerId: s.billerId, nickname: `${s.operatorName} ${s.number.slice(-4)}`, accountNumber: s.number });
+      }
+      payment = await engine.payBill({ accountId: acc.id, amountPaise: amount, method: store.method });
+    } else {
+      payment = await engine.payBill({ accountId: s.accountId, amountPaise: amount, method: store.method });
+    }
+    s.result = payment;
+    if (payment.status === 'success') toast('Payment successful');
+    else toast('Payment failed — wallet too low');
+  } catch (err) {
+    store.error = err.message ?? 'Something went wrong';
+    toast(store.error);
+  } finally {
+    store.submitting = false;
+    renderSheet();
+    render();
+  }
+}
+
+function onAddAccount(e) {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const box = $('#addError');
+  try {
+    engine.addAccount({
+      billerId: String(f.get('billerId')),
+      accountNumber: String(f.get('accountNumber') || '').trim(),
+      nickname: String(f.get('nickname') || ''),
+      outstandingPaise: Math.round(Number(f.get('amount') || 0) * 100),
+      dueDate: String(f.get('dueDate') || '') || undefined,
+    });
+    toast('Account linked');
+    render();
+  } catch (err) {
+    box.innerHTML = `<div class="err" style="margin-top:12px">${esc(err.message)}</div>`;
+  }
+}
+
+document.addEventListener('click', async (e) => {
+  const el = e.target.closest('[data-action]');
+  const act = el?.dataset.action;
+  if (!act) return;
+
+  switch (act) {
+    case 'route': location.hash = `#/${el.dataset.route}`; break;
+
+    case 'quick': {
+      store.filter = el.dataset.cat;
+      store.query = '';
+      location.hash = el.dataset.cat === 'mobile' || el.dataset.cat === 'dth' ? '#/recharge' : '#/bills';
+      break;
+    }
+
+    case 'pay': {
+      const acc = engine.listAccounts().find((a) => a.id === el.dataset.id);
+      store.method = 'wallet';
+      openSheet({ type:'pay', kind:'bill', accountId: acc.id, amountPaise: acc.outstandingPaise });
+      break;
+    }
+
+    case 'pay-all': {
+      const next = engine.listAccounts().find((a) => a.outstandingPaise > 0);
+      if (!next) return toast('Nothing due — you are all caught up');
+      store.method = 'wallet';
+      openSheet({ type:'pay', kind:'bill', accountId: next.id, amountPaise: next.outstandingPaise });
+      break;
+    }
+
+    case 'method': {
+      store.method = el.dataset.method;
+      renderSheet();
+      break;
+    }
+
+    case 'submit-pay': await submitPayment(); break;
+    case 'close-sheet': closeSheet(); break;
+
+    case 'topup': openSheet({ type:'topup' }); break;
+
+    case 'topup-amt': {
+      const amt = Number(el.dataset.amt);
+      if (store.sheet?.type === 'topup') {
+        const input = $('#topupAmount');
+        if (input) { input.value = String(amt / 100); input.focus(); return; }
+      }
+      try {
+        engine.topUpWallet(amt);
+        toast(`${Money.format(amt)} added to wallet`);
+        closeSheet();
+        render();
+      } catch (err) { toast(err.message); }
+      break;
+    }
+
+    case 'submit-topup': {
+      const v = Math.round(Number($('#topupAmount').value) * 100);
+      try {
+        engine.topUpWallet(v);
+        toast(`${Money.format(v)} added to wallet`);
+        closeSheet();
+        render();
+      } catch (err) { toast(err.message); }
+      break;
+    }
+
+    case 'tx': {
+      const p = engine.state.payments.find((x) => x.id === el.dataset.id);
+      if (p) openSheet({ type:'receipt', payment: p });
+      break;
+    }
+
+    case 'receipt-last': {
+      const p = engine.listPayments({ accountId: el.dataset.id })[0];
+      if (p) openSheet({ type:'receipt', payment: p });
+      else toast('No receipt for this account yet');
+      break;
+    }
+
+    case 'retry': {
+      try {
+        const p = await engine.retryPayment(el.dataset.id);
+        toast(p.status === 'success' ? 'Retry successful' : 'Retry failed');
+        closeSheet();
+        render();
+      } catch (err) { toast(err.message); }
+      break;
+    }
+
+    case 'download': {
+      const p = engine.state.payments.find((x) => x.id === el.dataset.id);
+      const acc = engine.state.accounts.find((a) => a.id === p.accountId);
+      const text = [
+        'FLEXIBLE RECHARGE — PAYMENT RECEIPT',
+        '--------------------------------',
+        `Reference : ${p.reference}`,
+        `Status    : ${p.status}`,
+        `Biller    : ${acc?.biller?.name ?? '-'}`,
+        `Account   : ${acc?.accountNumber ?? '-'}`,
+        `Date      : ${new Date(p.createdAt).toLocaleString('en-IN')}`,
+        `Method    : ${METHOD_UI[p.method].label}`,
+        `Amount    : ${Money.format(p.amountPaise)}`,
+        `Fee       : ${p.feePaise ? Money.format(p.feePaise) : 'Free'}`,
+        `Total     : ${Money.format(p.amountPaise + p.feePaise)}`,
+      ].join('\n');
+      const url = URL.createObjectURL(new Blob([text], { type:'text/plain' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = `receipt-${p.reference}.txt`; a.click();
+      URL.revokeObjectURL(url);
+      toast('Receipt downloaded');
+      break;
+    }
+
+    case 'filter': store.filter = el.dataset.cat; store.query = ''; render(); break;
+
+    case 'toggle-unpaid':
+      store.filter = store.filter === 'unpaid' ? 'all' : 'unpaid';
+      render();
+      break;
+
+    case 'autopay': {
+      const acc = engine.state.accounts.find((a) => a.id === el.dataset.id);
+      engine.setAutoPay(acc.id, !acc.autoPay);
+      toast(`AutoPay ${acc.autoPay ? 'enabled' : 'disabled'}`);
+      render();
+      break;
+    }
+
+    case 'theme': {
+      const dark = document.documentElement.dataset.theme !== 'dark';
+      applyTheme(dark ? 'dark' : 'light');
+      render();
+      break;
+    }
+
+    case 'toggle-reminders':
+    case 'toggle-bio': {
+      const on = el.getAttribute('aria-checked') !== 'true';
+      el.setAttribute('aria-checked', String(on));
+      toast(`${act === 'toggle-reminders' ? 'Reminders' : 'Biometric lock'} ${on ? 'on' : 'off'}`);
+      break;
+    }
+
+    case 'reset':
+      engine.reset();
+      toast('Demo data reset');
+      render();
+      break;
+
+    case 'retype':
+      store.recharge.type = el.dataset.type;
+      store.recharge.number = '';
+      store.recharge.billerId = engine.state.billers.find((b) =>
+        el.dataset.type === 'mobile' ? b.category === 'mobile' : el.dataset.type === 'dth' ? b.category === 'dth' : b.category === 'internet')?.id ?? 'airtel';
+      render();
+      break;
+
+    case 'plan':
+      store.recharge.plan = Number(el.dataset.plan);
+      render();
+      break;
+
+    case 'recharge-pay': {
+      const num = ($('#rcNumber')?.value || '').replace(/\s+/g, '');
+      const amt = Math.round(Number($('#rcAmount')?.value || 0) * 100);
+      if (num.length < 6) return toast('Enter a valid mobile / subscriber number');
+      if (!(amt >= 1000)) return toast('Minimum recharge is ₹10');
+      const billerId = $('#rcBiller').value;
+      const operatorName = engine.getBiller(billerId)?.name ?? 'Recharge';
+      store.recharge.number = num;
+      store.recharge.billerId = billerId;
+      store.recharge.plan = amt;
+      store.method = 'wallet';
+      openSheet({ type:'pay', kind:'recharge', billerId, number: num, operatorName, amountPaise: amt });
+      break;
+    }
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'scrim') closeSheet();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
+$('#themeBtn').addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  render();
+});
+$('#bellBtn').addEventListener('click', () => openSheet({ type:'notify' }));
+
+/* ============================================================
+   Theme + router + boot
+   ============================================================ */
+function applyTheme(mode) {
+  document.documentElement.dataset.theme = mode;
+  try { localStorage.setItem(THEME_KEY, mode); } catch {}
+}
+
+function routeFromHash() {
+  const id = (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0];
+  store.route = VIEWS[id] ? id : 'home';
+  store.sheet = null;
+  window.scrollTo({ top:0 });
+  render();
+}
+
+try {
+  const saved = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches;
+  applyTheme(saved ?? (prefersDark ? 'dark' : 'light'));
+} catch { applyTheme('light'); }
+
+window.addEventListener('hashchange', routeFromHash);
+routeFromHash();
+
+/* expose for quick console poking / tests */
+window.__utilitypay = { engine, store, render };
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a51800ebf93eb2a0',t:'MTc5MzE3MDE5OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
